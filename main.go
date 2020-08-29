@@ -38,7 +38,21 @@ func GetId(r Runner) string {
 	}
 
 	return m[1]
+}
 
+func GetPropId(r Runner, id, s string) string {
+	re, err := regexp.Compile(s + `\s\((\d+)\)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	out := r.Run([]string{"list-props", id})
+	m := re.FindStringSubmatch(out)
+	if len(m) == 0 {
+		log.Fatalf("Cannot extract prop ID:\n%s", out)
+	}
+
+	return m[1]
 }
 
 func SetProp(r Runner, id, prop, value string) {
@@ -53,16 +67,21 @@ func SetButtonMap(r Runner, id, value string) {
 
 func main() {
 	props := [][]string{
-		{"290", "1"},   // Tapping Enabled
-		{"292", "0"},   // Tapping Drag Enabled
-		{"298", "1"},   // Natural Scrolling Enabled
-		{"310", "0.5"}, // Accel Speed
+		{"Tapping Enabled", "1"},
+		{"Tapping Drag Enabled", "0"},
+		{"Natural Scrolling Enabled", "1"},
+		{"Accel Speed", "0.5"},
 	}
 
 	r := XinputRunner{}
 	id := GetId(r)
+	log.Output(2, "Device ID: "+id)
+
+	prop := ""
 	for _, o := range props {
-		SetProp(r, id, o[0], o[1])
+		prop = GetPropId(r, id, o[0])
+		log.Output(2, "Property "+o[0]+" ID: "+prop)
+		SetProp(r, id, prop, o[1])
 	}
 	SetButtonMap(r, id, "1 3 3") // avoiding 2 removes middle-buttom
 }

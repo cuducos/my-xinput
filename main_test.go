@@ -56,6 +56,8 @@ func (m MockRunner) Run(cmd []string) string {
 	switch cmd[0] {
 	case "list":
 		return list
+	case "list-props":
+		return listProps
 	default:
 		return ""
 	}
@@ -67,4 +69,11 @@ func TestGetId(t *testing.T) {
 		t.Errorf("Expected 19, but got %s", id)
 	}
 
+}
+
+func TestGetPropId(t *testing.T) {
+	mock := MockRunner{}
+	if id := GetPropId(mock, "1", "Tapping Enabled"); id != "290" {
+		t.Errorf("Expected 290, but got %s", id)
+	}
 }
