@@ -7,8 +7,6 @@ import (
 	"regexp"
 )
 
-const name = "HAILUCK CO.,LTD Usb Touch Touchpad"
-
 type Runner interface {
 	Run(cmd []string) string
 }
@@ -25,8 +23,8 @@ func (x XinputRunner) Run(cmd []string) string {
 
 }
 
-func GetId(r Runner) string {
-	re, err := regexp.Compile(name + `\s+id=(\d+)`)
+func GetId(r Runner, s string) string {
+	re, err := regexp.Compile(s + `\s+id=(\d+)`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,7 +47,7 @@ func GetPropId(r Runner, id, s string) string {
 	out := r.Run([]string{"list-props", id})
 	m := re.FindStringSubmatch(out)
 	if len(m) == 0 {
-		log.Fatalf("Cannot extract prop ID:\n%s", out)
+		log.Fatalf("Cannot extract prop ID for " + s)
 	}
 
 	return m[1]
@@ -61,27 +59,32 @@ func SetProp(r Runner, id, prop, value string) {
 }
 
 func SetButtonMap(r Runner, id, value string) {
-	cmd := []string{"set-buttom-map", id, value}
+	cmd := []string{"set-button-map", id, value}
 	r.Run(cmd)
 }
 
 func main() {
-	props := [][]string{
+	ns := []string{"HAILUCK CO.,LTD Usb Touch Touchpad", "ELAN1300:00 04F3:30BE Touchpad"}
+	ps := [][]string{
 		{"Tapping Enabled", "1"},
 		{"Tapping Drag Enabled", "0"},
 		{"Natural Scrolling Enabled", "1"},
 		{"Accel Speed", "0.5"},
 	}
-
 	r := XinputRunner{}
-	id := GetId(r)
-	log.Output(2, "Device ID: "+id)
 
-	prop := ""
-	for _, o := range props {
-		prop = GetPropId(r, id, o[0])
-		log.Output(2, "Property "+o[0]+" ID: "+prop)
-		SetProp(r, id, prop, o[1])
+	for _, n := range ns {
+		log.Output(2, "Configuring "+n)
+		id := GetId(r, n)
+		log.Output(2, "Device ID: "+id)
+
+		p := ""
+		for _, o := range ps {
+			p = GetPropId(r, id, o[0])
+			log.Output(2, "Property "+o[0]+" ID: "+p)
+			SetProp(r, id, p, o[1])
+		}
+		SetButtonMap(r, id, "1 3 3") // removes middle-button
+		log.Output(2, "Configured the button map")
 	}
-	SetButtonMap(r, id, "1 3 3") // avoiding 2 removes middle-buttom
 }
